@@ -152,7 +152,7 @@ export function QuizProvider({ children }) {
       respostas: answers
     };
 
-    fetch('https://webmkt.sucessodonto.com.br/webhook/quiz-v3', {
+    fetch('https://webmkt.sucessodonto.com.br/webhook/quiz-v4', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
