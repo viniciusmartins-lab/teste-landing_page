@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Custom Select Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0D0D0D;
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .demo-wrapper {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .demo-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: #C9A84C;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  /* ── Field wrapper ── */
+  .field { display: flex; flex-direction: column; gap: 8px; }
+
+  .field-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #A0A0A0;
+    letter-spacing: 0.03em;
+  }
+  .field-label span { color: #C9A84C; }
+
+  /* ── Custom Select ── */
+  .custom-select { position: relative; user-select: none; }
+
+  .select-trigger {
+    width: 100%;
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 14px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 400;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    backdrop-filter: blur(8px);
+  }
+
+  .select-trigger:hover,
+  .custom-select.open .select-trigger {
+    border-color: rgba(201,168,76,0.55);
+    background: rgba(201,168,76,0.06);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+  }
+
+  .select-trigger .placeholder { color: #555; }
+  .select-trigger .selected-val { color: #fff; display: flex; align-items: center; gap: 10px; }
+  .select-trigger .selected-val .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #C9A84C;
+    flex-shrink: 0;
+  }
+
+  .chevron {
+    width: 18px; height: 18px;
+    stroke: #C9A84C;
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+  }
+  .custom-select.open .chevron { transform: rotate(180deg); }
+
+  /* ── Dropdown ── */
+  .select-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0; right: 0;
+    background: rgba(18,18,18,0.95);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 16px;
+    backdrop-filter: blur(24px);
+    overflow: hidden;
+    z-index: 100;
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+  }
+
+  .custom-select.open .select-dropdown {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: all;
+  }
+
+  .dropdown-header {
+    padding: 12px 16px 8px;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: #444;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .select-option {
+    padding: 13px 18px;
+    font-size: 15px;
+    color: #C8C8C8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.15s, color 0.15s;
+    position: relative;
+  }
+
+  .select-option:not(:last-child) {
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .select-option::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #333;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+
+  .select-option:hover {
+    background: rgba(201,168,76,0.08);
+    color: #fff;
+  }
+  .select-option:hover::before { background: #C9A84C; }
+
+  .select-option.active {
+    background: rgba(201,168,76,0.1);
+    color: #E8C96D;
+  }
+  .select-option.active::before { background: #C9A84C; }
+
+  .select-option .check {
+    margin-left: auto;
+    opacity: 0;
+    stroke: #C9A84C;
+    width: 16px; height: 16px;
+    transition: opacity 0.15s;
+  }
+  .select-option.active .check { opacity: 1; }
+
+  /* ── Faturamento com badges coloridos ── */
+  .option-faixa {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .option-faixa .faixa-label { font-size: 15px; }
+  .option-faixa .faixa-sub { font-size: 11px; color: #555; }
+
+  .faixa-badge {
+    margin-left: auto;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .faixa-badge.low  { background: rgba(217,83,79,0.15);  color: #d9534f; border: 1px solid rgba(217,83,79,0.3); }
+  .faixa-badge.mid  { background: rgba(240,173,78,0.15); color: #f0ad4e; border: 1px solid rgba(240,173,78,0.3); }
+  .faixa-badge.high { background: rgba(92,184,92,0.15);  color: #5cb85c; border: 1px solid rgba(92,184,92,0.3); }
+
+  /* ── Input padrão (para comparação) ── */
+  .custom-input {
+    width: 100%;
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 14px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .custom-input::placeholder { color: #444; }
+  .custom-input:focus {
+    border-color: rgba(201,168,76,0.55);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+  }
+
+  .form-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(201,168,76,0.12);
+    border-radius: 24px;
+    padding: 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 500px) { .row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="demo-wrapper">
+  <p class="demo-label">Preview — Custom Select Components</p>
+
+  <div class="form-card">
+
+    <div class="field">
+      <label class="field-label">Nome completo <span>*</span></label>
+      <input class="custom-input" type="text" placeholder="Como prefere ser chamado(a)?">
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label class="field-label">E-mail <span>*</span></label>
+        <input class="custom-input" type="email" placeholder="seu@email.com">
+      </div>
+      <div class="field">
+        <label class="field-label">WhatsApp <span>*</span></label>
+        <input class="custom-input" type="tel" placeholder="(11) 99999-9999">
+      </div>
+    </div>
+
+    <!-- SELECT 1: Área de atuação -->
+    <div class="field">
+      <label class="field-label">Área de atuação <span>*</span></label>
+      <div class="custom-select" id="select-area">
+        <div class="select-trigger" onclick="toggleSelect('select-area')">
+          <span class="placeholder" id="select-area-label">Selecione sua área de atuação</span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+        <div class="select-dropdown">
+          <div class="dropdown-header">Selecione uma opção</div>
+          <div class="select-option" onclick="selectOption('select-area', 'Dentista', this)">
+            <span>🦷</span> Dentista
+            <svg class="check" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="select-option" onclick="selectOption('select-area', 'Médico', this)">
+            <span>🩺</span> Médico
+            <svg class="check" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="select-option" onclick="selectOption('select-area', 'Outros', this)">
+            <span>💼</span> Outros
+            <svg class="check" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SELECT 2: Faturamento com badges de nível -->
+    <div class="field">
+      <label class="field-label">Faturamento mensal atual <span>*</span></label>
+      <div class="custom-select" id="select-fat">
+        <div class="select-trigger" onclick="toggleSelect('select-fat')">
+          <span class="placeholder" id="select-fat-label">Selecione a faixa da sua clínica</span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+        <div class="select-dropdown">
+          <div class="dropdown-header">Faturamento mensal</div>
+          <div class="select-option" onclick="selectOption('select-fat', 'Até R$ 20.000/mês', this)">
+            <div class="option-faixa"><span class="faixa-label">Até R$ 20.000/mês</span></div>
+            <span class="faixa-badge low">Iniciante</span>
+            <svg class="check" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="select-option" onclick="selectOption('select-fat', 'R$ 20k – R$ 50k/mês', this)">
+            <div class="option-faixa"><span class="faixa-label">R$ 20.000 a R$ 50.000/mês</span></div>
+            <span class="faixa-badge mid">Crescendo</span>
+            <svg class="check" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="select-option" onclick="selectOption('select-fat', 'R$ 50k – R$ 100k/mês', this)">
+            <div class="option-faixa"><span class="faixa-label">R$ 50.000 a R$ 100.000/mês</span></div>
+            <span class="faixa-badge high">Consolidado</span>
+            <svg class="check" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="select-option" onclick="selectOption('select-fat', 'R$ 100k – R$ 200k/mês', this)">
+            <div class="option-faixa"><span class="faixa-label">R$ 100.000 a R$ 200.000/mês</span></div>
+            <span class="faixa-badge high">Premium</span>
+            <svg class="check" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="select-option" onclick="selectOption('select-fat', 'Acima de R$ 200.000/mês', this)">
+            <div class="option-faixa"><span class="faixa-label">Acima de R$ 200.000/mês</span></div>
+            <span class="faixa-badge high" style="background:rgba(201,168,76,0.15);color:#C9A84C;border-color:rgba(201,168,76,0.3)">Elite</span>
+            <svg class="check" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function toggleSelect(id) {
+    const el = document.getElementById(id);
+    const isOpen = el.classList.contains('open');
+    document.querySelectorAll('.custom-select').forEach(s => s.classList.remove('open'));
+    if (!isOpen) el.classList.add('open');
+  }
+
+  function selectOption(selectId, value, optionEl) {
+    const select = document.getElementById(selectId);
+    const label = document.getElementById(selectId + '-label');
+    
+    select.querySelectorAll('.select-option').forEach(o => o.classList.remove('active'));
+    optionEl.classList.add('active');
+    
+    label.outerHTML = `<span class="selected-val" id="${selectId}-label"><span class="dot"></span>${value}</span>`;
+    select.classList.remove('open');
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.custom-select')) {
+      document.querySelectorAll('.custom-select').forEach(s => s.classList.remove('open'));
+    }
+  });
+</script>
+</body>
+</html>
