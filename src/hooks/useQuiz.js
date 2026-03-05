@@ -138,6 +138,27 @@ export function QuizProvider({ children }) {
     const { step, summary, hasPosted, user, answers } = state;
     if (step !== 3 || !summary || hasPosted) return;
 
+    let paginaCaptura = '';
+    let utm = {
+      utm_source: '',
+      utm_campaign: '',
+      utm_term: '',
+      utm_content: '',
+      utm_medium: ''
+    };
+
+    if (typeof window !== 'undefined') {
+      paginaCaptura = window.location.href || '';
+      const params = new URLSearchParams(window.location.search || '');
+      utm = {
+        utm_source: params.get('utm_source') || '',
+        utm_campaign: params.get('utm_campaign') || '',
+        utm_term: params.get('utm_term') || '',
+        utm_content: params.get('utm_content') || '',
+        utm_medium: params.get('utm_medium') || ''
+      };
+    }
+
     const payload = {
       nome: user.nome,
       email: user.email,
@@ -149,7 +170,9 @@ export function QuizProvider({ children }) {
       nps_detratores: summary.npsDetratores,
       nps_neutros: summary.npsNeutros,
       nps_promotores: summary.npsPromotores,
-      respostas: answers
+      respostas: answers,
+      pagina_captura: paginaCaptura,
+      ...utm
     };
 
     fetch('https://webmkt.sucessodonto.com.br/webhook/quiz-v4', {
