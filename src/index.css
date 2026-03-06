@@ -19,6 +19,48 @@ body {
   color: #ffffff;
 }
 
+body[data-theme='light'] {
+  background:
+    radial-gradient(
+      ellipse at 50% 0%,
+      rgba(201, 168, 76, 0.08) 0%,
+      transparent 60%
+    ),
+    #f4f4f4;
+  color: #111111;
+}
+
+body[data-theme='light'] .text-textMain {
+  color: #111111;
+}
+
+body[data-theme='light'] .text-textSecondary {
+  color: #4b5563;
+}
+
+body[data-theme='light'] .text-\[\#C8C8C8\] {
+  color: #4b5563;
+}
+
+body[data-theme='light'] .text-\[\#666666\] {
+  color: #6b7280;
+}
+
+body[data-theme='light'] .bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #111111;
+}
+
+body[data-theme='light'] .border-white\/10 {
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+body[data-theme='light'] input,
+body[data-theme='light'] textarea,
+body[data-theme='light'] select {
+  color: #111111;
+}
+
 body::after {
   content: '';
   pointer-events: none;

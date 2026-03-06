@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { StepForm } from './components/StepForm';
 import { ProgressBar } from './components/ProgressBar';
@@ -46,9 +47,27 @@ function QuizFlow() {
 
   const progressCurrent = isMidway ? currentQuestionIndex + 1 : currentQuestionIndex + 1;
 
+  const [theme, setTheme] = useState('dark');
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem('theme');
+    if (stored === 'light' || stored === 'dark') {
+      setTheme(stored);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.body.dataset.theme = theme;
+    window.localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   return (
     <div className="min-h-screen text-white flex flex-col">
-      <Header />
+      <Header theme={theme} onToggleTheme={toggleTheme} />
 
       <main className="flex-1">
         <div className="max-w-5xl mx-auto px-4 pt-0 pb-6 sm:pt-0 sm:pb-10 space-y-6">
